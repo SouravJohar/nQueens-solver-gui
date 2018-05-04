@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<title>nQueens</title>
+	<meta charset="UTF-8">
+	<script src="js/jquery-3.2.1.min.js"></script>
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link rel="stylesheet" href="css/chessboard-0.3.0.min.css">
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+	<script>
+		if (typeof module === 'object') {
+			window.module = module;
+			module = undefined;
+		}
+	</script>
+	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+	<script src="https://code.jquery.com/jquery-1.12.4.min.js"></script>
+	<script src="js/chessboard-0.3.0.js"></script>
+	<script>
+		if (window.module) module = window.module;
+	</script>
+</head>
+
+<body>
+	<div class="container">
+		<div class="jumbotron">
+			<h1>nQueens Solver</h1>
+		</div>
+		<br>
+		<div id="board1" style="margin-left:20%;width: 400px"></div>
+		<script>
+			var board1 = ChessBoard('board1', 'start');
+		</script>
+		<br>
+		<button class="btn btn-success" style="margin-left:33%" onclick="start()">Start</button>
+		<button class="btn btn-danger" onclick="stop()">Stop</button>
+		<button type="button" class="btn btn-warning" data-toggle="collapse" data-target="#demo">Configure</button>
+		<div id="demo" class="collapse" style="margin-left:30%">
+			<br>
+			<label>Population Size:</label>
+			<input id="pop" type="number" value=200 placeholder="Initial Population Size" />
+			<br>
+			<label>Chessboard Size:</label>
+			<input id="N" type="number" value=8 placeholder="8" disabled/>
+			<br>
+			<label>Mutation Rate:</label>
+			<input id="mutation" type="number" value=0.1 placeholder="Mutation Rate" />
+		</div>
+		<br>
+		<div style="background-color:#1fb583;border-radius:4px">
+			<h3 id="gen"></h3></div>
+		<div style="background-color:#d685ca;border-radius:4px">
+			<h3 id="fit"></h3></div>
+	</div>
+	<script>
+		require("./renderer.js")
+	</script>
+</body>
+
+
+<script>
+
+	var notify = require("node-notify")
+
+	var l = {
+		position: {}
+	}
+	var board1 = ChessBoard('board1', l);
+	var scriptExecution;
+
+	function stop() {
+		scriptExecution.kill();
+	}
+
+	function start() {
+
+		var uint8arrayToString = function(data) {
+			return String.fromCharCode.apply(null, data);
+		};
+
+		const spawn = require('child_process').spawn;
+		var popsize = document.getElementById("pop").value;
+		var N = document.getElementById("N").value;
+		var mut = document.getElementById("mutation").value;
+
+		scriptExecution = spawn('python', ['solver.py', popsize, N, mut]);
+
+		scriptExecution.stdout.on('data', (data) => {
+
+			var string = uint8arrayToString(data);
+			var matrix = string.split("\n")[2]
+			var fit = string.split("\n")[1]
+			var gen = string.split("\n")[0]
+			var array = JSON.parse(matrix);
+			var alpha = "";
+			var row = -1;
+			var cols = "abcdefgh".split("")
+			var nos = [8, 7, 6, 5, 4, 3, 2, 1]
+			var translate = []
+			for (var i = 0; i < 8; i++) {
+				for (var j = 0; j < 8; j++) {
+					if (array[i][j] == 1) {
+						alpha = cols[j]
+						row = nos[i]
+						translate[i] = alpha + row
+					}
+				}
+			}
+			var item = 'bQ'
+			var cfg = {
+				position: {}
+			}
+			for (var i = 0; i < translate.length; i++) {
+				cfg.position[translate[i]] = item;
+			}
+
+			var board1 = ChessBoard('board1', cfg);
+			document.getElementById("gen").innerHTML = "Generation: " + gen;
+			document.getElementById("fit").innerHTML = "Maximum Fitness: " + fit;
+			if (fit === "1.0") {
+				document.getElementById("fit").innerHTML = "Maximum Fitness: " + fit + ",\nSolution Found!";
+				notify({title: "N-Queens", message: "Solution Found!"});
+			}
+		});
+
+		scriptExecution.on('exit', (code) => {
+			console.log("Process quit with code : " + code);
+		});
+	}
+</script>
+
+</html>

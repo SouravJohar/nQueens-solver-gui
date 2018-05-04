@@ -1,0 +1,17 @@
+{
+  "name": "nQueens-solver-gui",
+  "version": "1.0.0",
+  "description": "A simple app to solve the n-queens problem using genetic algorithms.",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "repository": "",
+  "keywords": [
+  ],
+  "author": "Sourav Johar",
+  "license": "CC0-1.0",
+  "devDependencies": {
+    "electron": "^1.8.4"
+  }
+}
